@@ -11,8 +11,8 @@ import uy.kohesive.keplin.kotlin.script.SimplifiedRepl
 import uy.kohesive.keplin.kotlin.script.resolver.AnnotationTriggeredScriptDefinition
 import uy.kohesive.keplin.kotlin.script.resolver.JarFileScriptDependenciesResolver
 import uy.kohesive.keplin.kotlin.script.resolver.maven.MavenScriptDependenciesResolver
-import uy.kohesive.keplin.kotlin.script.util.assertNotEmpty
-import uy.kohesive.keplin.kotlin.script.util.findClassJars
+import uy.kohesive.keplin.util.ClassPathUtils.findClassJars
+import uy.kohesive.keplin.util.assertNotEmpty
 import kotlin.reflect.KClass
 
 
@@ -24,23 +24,24 @@ class ReplForJupyter(val conn: JupyterConnection) {
             ScriptTemplateWithDisplayHelpers::class,
             ScriptArgsWithTypes(EMPTY_SCRIPT_ARGS, EMPTY_SCRIPT_ARGS_TYPES),
             listOf(JarFileScriptDependenciesResolver(), MavenScriptDependenciesResolver())),
-            additionalClasspath = conn.config.classpath + findClassJars(MimeTypedResult::class).assertNotEmpty("Must have MimeTypedResult in classpath"),
+            additionalClasspath = conn.config.classpath + findClassJars(MimeTypedResult::class)
+                    .assertNotEmpty("Must have MimeTypedResult in classpath"),
             sharedHostClassLoader = null
     )
 
     fun checkComplete(executionNumber: Long, code: String): CheckResult {
-        val codeLine = ReplCodeLine(executionNumber.toInt(), code)
+        val codeLine = ReplCodeLine(executionNumber.toInt(),0, code)  //todo provide actually needed generation
         return engine.check(codeLine)
     }
 
-    var lastEvalhistory: List<ReplCodeLine> = emptyList()
+//    var lastEvalhistory: List<ReplCodeLine> = emptyList()
     val classpath: List<String> get() = engine.currentEvalClassPath.map { it.toString() }
 
     fun eval(executionNumber: Long, code: String): EvalResult {
         synchronized(this) {
-            val codeLine = ReplCodeLine(executionNumber.toInt(), code)
+            val codeLine = ReplCodeLine(executionNumber.toInt(),0, code) //todo provide actually needed generation
             val result = engine.compileAndEval(codeLine)
-            lastEvalhistory = result.evalHistory
+//            lastEvalhistory = result.evalHistory
             return result
         }
     }
